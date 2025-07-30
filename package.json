@@ -10,7 +10,8 @@
     "test-watch": "./bin/test-watch",
     "test-coverage": "./bin/test-coverage",
     "build": "./bin/build",
-    "lint": "./bin/lint"
+    "lint": "./bin/lint",
+    "typecheck": "./bin/typecheck"
   },
   "scripts": {
     "dev": "next dev",
@@ -19,6 +20,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"

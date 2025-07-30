@@ -1,0 +1,6 @@
+#!/bin/sh
+# Sidewalks Type Checking - TypeScript Validation
+# Runs TypeScript compiler to check for type errors without emitting files
+# Usage: ./bin/typecheck
+
+npx tsc --noEmit
