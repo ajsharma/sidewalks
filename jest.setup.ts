@@ -26,16 +26,16 @@ jest.mock('next/navigation', () => ({
 // Mock Next.js image component
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props) => {
+  default: (props: any) => {
     // eslint-disable-next-line @next/next/no-img-element
     return <img {...props} alt={props.alt} />
   },
 }))
 
-// Mock Next.js link component
+// Mock Next.js link component  
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, ...rest }) => {
+  default: ({ children, ...rest }: any) => {
     return <a {...rest}>{children}</a>
   },
 }))

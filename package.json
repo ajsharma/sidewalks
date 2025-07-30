@@ -16,7 +16,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "dev:server": "nodemon --exec ts-node server/index.ts",
+    "dev:server": "nodemon",
     "dev:all": "npm run dev & npm run dev:server",
     "build": "next build",
     "start": "next start",
