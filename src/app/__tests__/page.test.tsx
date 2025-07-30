@@ -7,7 +7,7 @@ describe('Home Page', () => {
     
     // Check for key elements
     expect(screen.getByAltText('Next.js logo')).toBeInTheDocument();
-    expect(screen.getByText('Get started by editing')).toBeInTheDocument();
+    expect(screen.getByText(/Get started by editing/)).toBeInTheDocument();
     expect(screen.getByText('src/app/page.tsx')).toBeInTheDocument();
   });
 
