@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# Launch Drizzle Studio for database management
+# This opens a web interface to view and edit database data
+
+npx drizzle-kit studio

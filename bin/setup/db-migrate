@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# Run database migrations
+# This applies the migration files to the database
+
+npx drizzle-kit migrate
