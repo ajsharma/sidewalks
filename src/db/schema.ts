@@ -1,4 +1,4 @@
-import { pgTable, bigserial, varchar, text, timestamp, bigint, integer, boolean, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, bigserial, varchar, text, timestamp, bigint, integer, boolean, primaryKey, unique, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import type { AdapterAccount } from '@auth/core/adapters';
 
@@ -7,21 +7,21 @@ export const users = pgTable('user', {
   id: varchar('id', { length: 255 }).notNull().primaryKey(),
   name: varchar('name', { length: 255 }),
   email: varchar('email', { length: 255 }).notNull(),
-  emailVerified: timestamp('emailVerified', { mode: 'date' }),
+  emailVerified: timestamp('email_verified', { mode: 'date' }),
   image: varchar('image', { length: 255 }),
 })
 
 export const accounts = pgTable(
   'account',
   {
-    userId: varchar('userId', { length: 255 })
+    userId: varchar('user_id', { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     type: varchar('type', { length: 255 })
       .$type<AdapterAccount['type']>()
       .notNull(),
     provider: varchar('provider', { length: 255 }).notNull(),
-    providerAccountId: varchar('providerAccountId', { length: 255 }).notNull(),
+    providerAccountId: varchar('provider_account_id', { length: 255 }).notNull(),
     refresh_token: text('refresh_token'),
     access_token: text('access_token'),
     expires_at: integer('expires_at'),
@@ -38,15 +38,15 @@ export const accounts = pgTable(
 )
 
 export const sessions = pgTable('session', {
-  sessionToken: varchar('sessionToken', { length: 255 }).notNull().primaryKey(),
-  userId: varchar('userId', { length: 255 })
+  sessionToken: varchar('session_token', { length: 255 }).notNull().primaryKey(),
+  userId: varchar('user_id', { length: 255 })
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   expires: timestamp('expires', { mode: 'date' }).notNull(),
 })
 
 export const verificationTokens = pgTable(
-  'verificationToken',
+  'verification_token',
   {
     identifier: varchar('identifier', { length: 255 }).notNull(),
     token: varchar('token', { length: 255 }).notNull(),
@@ -98,36 +98,42 @@ export const playlists = pgTable('playlists', {
 // Playlist Activities (many-to-many relationship)
 export const playlistActivities = pgTable('playlist_activities', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
-  playlistId: bigint('playlist_id', { mode: 'number' }).references(() => playlists.id).notNull(),
-  activityId: bigint('activity_id', { mode: 'number' }).references(() => activities.id).notNull(),
+  playlistId: bigint('playlist_id', { mode: 'number' }).references(() => playlists.id, { onDelete: 'cascade' }).notNull(),
+  activityId: bigint('activity_id', { mode: 'number' }).references(() => activities.id, { onDelete: 'cascade' }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  uniquePlaylistActivity: unique().on(table.playlistId, table.activityId),
+}));
 
 // Playlist Watchers (users who can view a playlist)
 export const playlistWatchers = pgTable('playlist_watchers', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
-  playlistId: bigint('playlist_id', { mode: 'number' }).references(() => playlists.id).notNull(),
-  userId: varchar('user_id', { length: 255 }).references(() => users.id).notNull(),
+  playlistId: bigint('playlist_id', { mode: 'number' }).references(() => playlists.id, { onDelete: 'cascade' }).notNull(),
+  userId: varchar('user_id', { length: 255 }).references(() => users.id, { onDelete: 'cascade' }).notNull(),
   inviteStatus: varchar('invite_status', { length: 20 }).notNull().default('pending'), // pending, accepted, archived
   createdAt: timestamp('created_at').defaultNow().notNull(),
   modifiedAt: timestamp('modified_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  uniquePlaylistUser: unique().on(table.playlistId, table.userId),
+}));
 
 // Activity Interest (users rating activities 1-5)
 export const activityInterest = pgTable('activity_interest', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
-  activityId: bigint('activity_id', { mode: 'number' }).references(() => activities.id).notNull(),
-  userId: varchar('user_id', { length: 255 }).references(() => users.id).notNull(),
+  activityId: bigint('activity_id', { mode: 'number' }).references(() => activities.id, { onDelete: 'cascade' }).notNull(),
+  userId: varchar('user_id', { length: 255 }).references(() => users.id, { onDelete: 'cascade' }).notNull(),
   interestLevel: integer('interest_level').notNull(), // 1-5 scale
   createdAt: timestamp('created_at').defaultNow().notNull(),
   modifiedAt: timestamp('modified_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  uniqueActivityUser: unique().on(table.activityId, table.userId),
+}));
 
 // Google Calendar Integration
 export const googleCalendarEvents = pgTable('google_calendar_events', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
-  userId: varchar('user_id', { length: 255 }).references(() => users.id).notNull(),
-  activityId: bigint('activity_id', { mode: 'number' }).references(() => activities.id).notNull(),
+  userId: varchar('user_id', { length: 255 }).references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  activityId: bigint('activity_id', { mode: 'number' }).references(() => activities.id, { onDelete: 'cascade' }).notNull(),
   googleEventId: varchar('google_event_id', { length: 255 }).notNull(),
   calendarId: varchar('calendar_id', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -136,8 +142,8 @@ export const googleCalendarEvents = pgTable('google_calendar_events', {
 // Activity Participation History
 export const activityParticipation = pgTable('activity_participation', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
-  activityId: bigint('activity_id', { mode: 'number' }).references(() => activities.id).notNull(),
-  userId: varchar('user_id', { length: 255 }).references(() => users.id).notNull(),
+  activityId: bigint('activity_id', { mode: 'number' }).references(() => activities.id, { onDelete: 'cascade' }).notNull(),
+  userId: varchar('user_id', { length: 255 }).references(() => users.id, { onDelete: 'cascade' }).notNull(),
   participatedAt: timestamp('participated_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -150,19 +156,20 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     fields: [users.id],
     references: [userProfiles.userId],
   }),
-}));
-
-export const userProfilesRelations = relations(userProfiles, ({ one, many }) => ({
-  user: one(users, {
-    fields: [userProfiles.userId],
-    references: [users.id],
-  }),
+  // Direct relations to user-created content
   activities: many(activities),
   playlists: many(playlists),
   playlistWatchers: many(playlistWatchers),
   activityInterest: many(activityInterest),
   googleCalendarEvents: many(googleCalendarEvents),
   activityParticipation: many(activityParticipation),
+}));
+
+export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
+  user: one(users, {
+    fields: [userProfiles.userId],
+    references: [users.id],
+  }),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
