@@ -3,4 +3,4 @@
 # Starts both Next.js frontend (port 3000) and Express backend (port 3001)
 # Usage: ./bin/dev-all
 
-next dev & nodemon --exec ts-node server/index.ts
+npx next dev & npx nodemon --exec "npx ts-node --esm server/index.ts"

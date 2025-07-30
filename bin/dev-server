@@ -3,4 +3,4 @@
 # Starts the Express server with hot reload on port 3001
 # Usage: ./bin/dev-server
 
-nodemon --exec ts-node server/index.ts
+npx nodemon --exec "npx ts-node --esm server/index.ts"
