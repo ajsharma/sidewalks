@@ -1,34 +1,50 @@
-import { NextRequest } from 'next/server';
-import { GET } from '../route';
+import { GET } from '../route'
 
-describe('GET /api/health', () => {
-  it('should return health status with correct structure', async () => {
-    const request = new NextRequest('http://localhost:3000/api/health');
-    const response = await GET(request);
-    const data = await response.json();
+// Unit Testing for Next.js 15 App Router API Routes
+// Testing API route handlers in Node.js environment
+describe('/api/health Route Handler', () => {
+  describe('GET Request', () => {
+    it('returns correct response structure', async () => {
+      const response = await GET()
+      const data = await response.json()
 
-    expect(response.status).toBe(200);
-    expect(data).toEqual({
-      status: 'ok',
-      timestamp: expect.any(String),
-      service: 'sidewalks'
-    });
-    expect(new Date(data.timestamp)).toBeInstanceOf(Date);
-  });
+      expect(response.status).toBe(200)
+      expect(data).toEqual({
+        status: 'ok',
+        timestamp: expect.any(String),
+        service: 'sidewalks'
+      })
+    })
 
-  it('should include proper content-type header', async () => {
-    const request = new NextRequest('http://localhost:3000/api/health');
-    const response = await GET(request);
+    it('includes appropriate headers', async () => {
+      const response = await GET()
+      
+      expect(response.headers.get('content-type')).toContain('application/json')
+    })
 
-    expect(response.headers.get('content-type')).toContain('application/json');
-  });
+    it('returns valid ISO timestamp', async () => {
+      const response = await GET()
+      const data = await response.json()
+      
+      const timestamp = new Date(data.timestamp)
+      expect(timestamp.toISOString()).toBe(data.timestamp)
+      expect(timestamp.getTime()).toBeLessThanOrEqual(Date.now())
+    })
+  })
 
-  it('should return valid ISO timestamp', async () => {
-    const request = new NextRequest('http://localhost:3000/api/health');
-    const response = await GET(request);
-    const data = await response.json();
+  describe('Response Validation', () => {
+    it('maintains consistent service identifier', async () => {
+      const response = await GET()
+      const data = await response.json()
+      
+      expect(data.service).toBe('sidewalks')
+    })
 
-    const timestamp = new Date(data.timestamp);
-    expect(timestamp.toISOString()).toBe(data.timestamp);
-  });
-});
+    it('returns success status', async () => {
+      const response = await GET()
+      const data = await response.json()
+      
+      expect(data.status).toBe('ok')
+    })
+  })
+})
