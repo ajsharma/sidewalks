@@ -44,22 +44,40 @@ fi
 print_status "Updating Homebrew..."
 brew update
 
-# Install PostgreSQL 17
-print_status "Installing PostgreSQL 17..."
-brew install postgresql@17
+# Install PostgreSQL 17 (idempotent)
+if brew list postgresql@17 &> /dev/null; then
+    print_status "PostgreSQL 17 is already installed"
+else
+    print_status "Installing PostgreSQL 17..."
+    brew install postgresql@17
+fi
 
-brew link postgresql@17
+# Link PostgreSQL 17 (idempotent)
+if brew list --linked postgresql@17 &> /dev/null; then
+    print_status "PostgreSQL 17 is already linked"
+else
+    print_status "Linking PostgreSQL 17..."
+    brew link postgresql@17 --force
+fi
 
-# Add PostgreSQL 17 to PATH
-# echo 'export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"' >> ~/.zprofile
-# export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
+# Add PostgreSQL 17 to PATH (idempotent)
+if ! grep -q 'export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"' ~/.zprofile 2>/dev/null; then
+    print_status "Adding PostgreSQL 17 to PATH in ~/.zprofile..."
+    echo 'export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"' >> ~/.zprofile
+else
+    print_status "PostgreSQL 17 is already in PATH"
+fi
+export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
 
-# Start PostgreSQL service
-print_status "Starting PostgreSQL service..."
-brew services start postgresql@17
-
-# Wait a moment for the service to start
-sleep 3
+# Start PostgreSQL service (idempotent)
+if brew services list | grep -q "postgresql@17.*started"; then
+    print_status "PostgreSQL service is already running"
+else
+    print_status "Starting PostgreSQL service..."
+    brew services start postgresql@17
+    # Wait a moment for the service to start
+    sleep 3
+fi
 
 # Create database cluster if it doesn't exist
 if [ ! -d "/opt/homebrew/var/postgresql@17" ]; then
@@ -67,28 +85,54 @@ if [ ! -d "/opt/homebrew/var/postgresql@17" ]; then
     initdb-17 /opt/homebrew/var/postgresql@17
 fi
 
-print_status "Creating user and database..."
+# Check if user and database already exist (idempotent)
+if psql-17 postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'" 2>/dev/null | grep -q 1; then
+    print_status "Database user '${DB_USER}' already exists"
+    USER_EXISTS=true
+else
+    print_status "Creating database user '${DB_USER}'..."
+    USER_EXISTS=false
+fi
 
-# Connect to PostgreSQL and create user and database
-psql-17 postgres << EOF
+if psql-17 postgres -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" 2>/dev/null | grep -q 1; then
+    print_status "Database '${DB_NAME}' already exists"
+    DB_EXISTS=true
+else
+    print_status "Creating database '${DB_NAME}'..."
+    DB_EXISTS=false
+fi
+
+# Only create user and database if they don't exist
+if [ "$USER_EXISTS" = false ] || [ "$DB_EXISTS" = false ]; then
+    print_status "Setting up database user and database..."
+    
+    psql-17 postgres << EOF
+$(if [ "$USER_EXISTS" = false ]; then
+cat << USER_EOF
 -- Create user with login and password
 CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASSWORD}';
 
 -- Grant database creation privileges to user
 ALTER ROLE ${DB_USER} CREATEDB;
+USER_EOF
+fi)
 
+$(if [ "$DB_EXISTS" = false ]; then
+cat << DB_EOF
 -- Create database owned by the user
 CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};
+DB_EOF
+fi)
 
--- Grant all privileges on database to user
+-- Grant all privileges on database to user (safe to run multiple times)
 GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
-
--- List databases to confirm creation
-\l
 
 -- Quit
 \q
 EOF
+else
+    print_status "User and database already configured"
+fi
 
 print_status "PostgreSQL 17 installation completed successfully!"
 
@@ -166,11 +210,16 @@ fi
 
 print_status ".env.local updated with database connection"
 
-# Generate migrations from schema
-print_status "Generating database migrations..."
-npx drizzle-kit generate
+# Generate migrations from schema (idempotent)
+if [ -d "drizzle" ] && [ "$(ls -A drizzle 2>/dev/null)" ]; then
+    print_status "Migrations already exist, checking for schema changes..."
+    npx drizzle-kit generate
+else
+    print_status "Generating database migrations..."
+    npx drizzle-kit generate
+fi
 
-# Run migrations
+# Run migrations (idempotent - Drizzle tracks applied migrations)
 print_status "Running database migrations..."
 npx drizzle-kit migrate
 
