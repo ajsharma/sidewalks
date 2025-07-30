@@ -1,0 +1,6 @@
+#!/bin/sh
+# Sidewalks Testing - CI Mode
+# Runs Jest in CI mode with coverage and no watch mode for automated environments
+# Usage: ./bin/test-ci
+
+npx jest --ci --coverage --watchAll=false
