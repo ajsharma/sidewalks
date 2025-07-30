@@ -1,0 +1,6 @@
+#!/bin/sh
+# Sidewalks Development - Frontend Only
+# Starts the Next.js development server on port 3000
+# Usage: ./bin/dev
+
+next dev

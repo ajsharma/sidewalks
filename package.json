@@ -1,0 +1,41 @@
+{
+  "name": "sidewalks",
+  "version": "0.1.0",
+  "private": true,
+  "bin": {
+    "dev": "./bin/dev",
+    "dev-server": "./bin/dev-server",
+    "dev-all": "./bin/dev-all"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "dev:server": "nodemon --exec ts-node server/index.ts",
+    "dev:all": "npm run dev & npm run dev:server",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "next": "15.4.5",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.4.5",
+    "nodemon": "^3.1.10",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  }
+}
