@@ -1,0 +1,238 @@
+#!/bin/bash
+
+# PostgreSQL 17 Installation Script for macOS
+# This script installs PostgreSQL 17, creates a user, and sets up a database
+
+set -euo pipefail # Exit on any error
+
+echo "🚀 Starting PostgreSQL 17 installation..."
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Configuration variables (modify these as needed)
+DB_USER="sidewalks_database_dev_user"
+DB_PASSWORD="sidewalks_database_dev_user_password"
+DB_NAME="sidewalks_dev"
+
+# Function to print colored output
+print_status() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+print_error() {
+    echo -e "${RED}❌ $1${NC}"
+}
+
+# Check if Homebrew is installed
+if ! command -v brew &> /dev/null; then
+    print_warning "Homebrew not found. Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    print_status "Homebrew installed successfully"
+else
+    print_status "Homebrew is already installed"
+fi
+
+# Update Homebrew
+print_status "Updating Homebrew..."
+brew update
+
+# Install PostgreSQL 17 (idempotent)
+if brew list postgresql@17 &> /dev/null; then
+    print_status "PostgreSQL 17 is already installed"
+else
+    print_status "Installing PostgreSQL 17..."
+    brew install postgresql@17
+fi
+
+# Link PostgreSQL 17 (idempotent)
+if brew list --linked postgresql@17 &> /dev/null; then
+    print_status "PostgreSQL 17 is already linked"
+else
+    print_status "Linking PostgreSQL 17..."
+    brew link postgresql@17 --force
+fi
+
+# Add PostgreSQL 17 to PATH (idempotent)
+if ! grep -q 'export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"' ~/.zprofile 2>/dev/null; then
+    print_status "Adding PostgreSQL 17 to PATH in ~/.zprofile..."
+    echo 'export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"' >> ~/.zprofile
+else
+    print_status "PostgreSQL 17 is already in PATH"
+fi
+export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
+
+# Start PostgreSQL service (idempotent)
+if brew services list | grep -q "postgresql@17.*started"; then
+    print_status "PostgreSQL service is already running"
+else
+    print_status "Starting PostgreSQL service..."
+    brew services start postgresql@17
+    # Wait a moment for the service to start
+    sleep 3
+fi
+
+# Create database cluster if it doesn't exist
+if [ ! -d "/opt/homebrew/var/postgresql@17" ]; then
+    print_status "Initializing database cluster..."
+    initdb-17 /opt/homebrew/var/postgresql@17
+fi
+
+# Check if user and database already exist (idempotent)
+if psql-17 postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'" 2>/dev/null | grep -q 1; then
+    print_status "Database user '${DB_USER}' already exists"
+    USER_EXISTS=true
+else
+    print_status "Creating database user '${DB_USER}'..."
+    USER_EXISTS=false
+fi
+
+if psql-17 postgres -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" 2>/dev/null | grep -q 1; then
+    print_status "Database '${DB_NAME}' already exists"
+    DB_EXISTS=true
+else
+    print_status "Creating database '${DB_NAME}'..."
+    DB_EXISTS=false
+fi
+
+# Only create user and database if they don't exist
+if [ "$USER_EXISTS" = false ] || [ "$DB_EXISTS" = false ]; then
+    print_status "Setting up database user and database..."
+    
+    psql-17 postgres << EOF
+$(if [ "$USER_EXISTS" = false ]; then
+cat << USER_EOF
+-- Create user with login and password
+CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASSWORD}';
+
+-- Grant database creation privileges to user
+ALTER ROLE ${DB_USER} CREATEDB;
+USER_EOF
+fi)
+
+$(if [ "$DB_EXISTS" = false ]; then
+cat << DB_EOF
+-- Create database owned by the user
+CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};
+DB_EOF
+fi)
+
+-- Grant all privileges on database to user (safe to run multiple times)
+GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
+
+-- Quit
+\q
+EOF
+else
+    print_status "User and database already configured"
+fi
+
+print_status "PostgreSQL 17 installation completed successfully!"
+
+echo ""
+echo "📋 Installation Summary:"
+echo "========================"
+echo "PostgreSQL Version: 17"
+echo "Database User: ${DB_USER}"
+echo "Database Password: ${DB_PASSWORD}"
+echo "Database Name: ${DB_NAME}"
+echo ""
+echo "🔗 Connection Details:"
+echo "======================"
+echo "Host: localhost"
+echo "Port: 5432"
+echo "Database: ${DB_NAME}"
+echo "Username: ${DB_USER}"
+echo "Password: ${DB_PASSWORD}"
+echo ""
+echo "💡 Useful Commands:"
+echo "=================="
+echo "Connect to your database:"
+echo "  psql -h localhost -U ${DB_USER} -d ${DB_NAME}"
+echo ""
+echo "Start PostgreSQL service:"
+echo "  brew services start postgresql@17"
+echo ""
+echo "Stop PostgreSQL service:"
+echo "  brew services stop postgresql@17"
+echo ""
+echo "Restart PostgreSQL service:"
+echo "  brew services restart postgresql@17"
+echo ""
+echo "View running services:"
+echo "  brew services list"
+echo ""
+
+# Test the connection
+print_status "Testing database connection..."
+if psql-17 -h localhost -U ${DB_USER} -d ${DB_NAME} -c "SELECT version();" &> /dev/null; then
+    print_status "Database connection test successful!"
+else
+    print_error "Database connection test failed. Please check the setup."
+fi
+
+print_status "Setup complete! 🎉"
+
+# Generate and run Drizzle migrations
+print_status "Setting up Sidewalks database schema..."
+echo ""
+
+# Update .env.local with the database URL
+print_status "Updating .env.local with database connection..."
+DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@localhost:5432/${DB_NAME}"
+
+# Create or update .env.local
+if [ -f ".env.local" ]; then
+    # Update existing .env.local
+    sed -i '' "s|DATABASE_URL=.*|DATABASE_URL=\"${DATABASE_URL}\"|g" .env.local
+else
+    # Create new .env.local
+    cat > .env.local << EOF
+# Database
+DATABASE_URL="${DATABASE_URL}"
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key-here"
+
+# Google OAuth (you'll need to create these in Google Cloud Console)
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+EOF
+fi
+
+print_status ".env.local updated with database connection"
+
+# Generate migrations from schema (idempotent)
+if [ -d "drizzle" ] && [ "$(ls -A drizzle 2>/dev/null)" ]; then
+    print_status "Migrations already exist, checking for schema changes..."
+    npx drizzle-kit generate
+else
+    print_status "Generating database migrations..."
+    npx drizzle-kit generate
+fi
+
+# Run migrations (idempotent - Drizzle tracks applied migrations)
+print_status "Running database migrations..."
+npx drizzle-kit migrate
+
+print_status "Sidewalks database setup complete! 🎉"
+echo ""
+echo "🚀 Next steps:"
+echo "=============="
+echo "1. Update your .env.local with Google OAuth credentials:"
+echo "   - Go to https://console.cloud.google.com/"
+echo "   - Create a new project or select existing"
+echo "   - Enable Google Calendar API"
+echo "   - Create OAuth 2.0 credentials"
+echo "   - Add http://localhost:3000/api/auth/callback/google as redirect URI"
+echo ""
+echo "2. Run 'bin/dev' to start the development server"
+echo "3. Visit http://localhost:3000"

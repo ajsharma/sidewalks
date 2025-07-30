@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# Generate database migrations from schema changes
+# This creates migration files in the drizzle/ directory
+
+npx drizzle-kit generate

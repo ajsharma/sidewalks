@@ -4,6 +4,18 @@ A full-stack TypeScript application built with Next.js 15 and Express.js, featur
 
 ## Getting Started
 
+### Setup
+
+```bash
+bin/setup
+```
+
+To enable Google authentication, you'll need to:
+1. Go to https://console.cloud.google.com/
+2. Create OAuth 2.0 credentials
+3. Add http://localhost:3000/api/auth/callback/google as redirect URI
+4. Update your .env.local with the client ID and secret
+
 ### Development
 
 Run the full-stack development environment:
@@ -18,6 +30,12 @@ Or run services individually:
 bin/dev        # Frontend only (Next.js on port 3000)
 bin/dev-server # Backend only (Express on port 3001)
 ```
+
+The application will be accessible at http://localhost:3000 with:
+- Health endpoint: http://localhost:3000/api/health
+- Auth endpoints: http://localhost:3000/api/auth/*
+- Database management: bin/db-studio (opens Drizzle Studio)
+
 
 ### Testing
 

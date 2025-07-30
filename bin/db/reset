@@ -1,0 +1,22 @@
+#!/bin/sh
+# Sidewalks Database Reset
+# Drops all tables and recreates them from schema, then seeds with sample data
+# Usage: ./bin/db/reset
+
+set -euo pipefail # Exit on any error
+
+echo "🔄 Resetting Sidewalks database..."
+
+# Drop all existing tables
+echo "🗑️  Dropping all existing tables..."
+npx drizzle-kit push --force --config drizzle-reset.config.ts
+
+# Push schema to database (creates tables from scratch)
+echo "📋 Creating tables from schema..."
+npx drizzle-kit push
+
+# Seed the database with sample data
+echo "🌱 Seeding database with sample data..."
+./bin/db/seed
+
+echo "✅ Database reset complete!"
