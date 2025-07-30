@@ -1,0 +1,7 @@
+#!/bin/sh
+# Sidewalks Database Seeder (Drizzle Best Practices)
+# Populates the development database with deterministic sample data
+# Usage: ./bin/db/seed
+
+echo "🌱 Seeding Sidewalks database with Drizzle Seed (best practices)..."
+npx tsx src/db/seed.ts
