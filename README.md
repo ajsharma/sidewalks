@@ -1,18 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sidewalks
+
+A full-stack TypeScript application built with Next.js 15 and Express.js, featuring activity curation and discovery.
 
 ## Getting Started
 
-First, run the development server:
+### Development
+
+Run the full-stack development environment:
 
 ```bash
-bin/dev-all
+bin/dev-all    # Frontend (port 3000) + Backend (port 3001)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Or run services individually:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+bin/dev        # Frontend only (Next.js on port 3000)
+bin/dev-server # Backend only (Express on port 3001)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Testing
+
+```bash
+bin/test          # Run all tests
+bin/test-watch    # Run tests in watch mode
+bin/test-coverage # Run tests with coverage report
+```
+
+### Building & Quality
+
+```bash
+bin/build # Create production build
+bin/lint  # Run ESLint code quality checks
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view the frontend and [http://localhost:3001/api/health](http://localhost:3001/api/health) to check backend status.
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS v4
+- **Backend**: Express.js 5, TypeScript, with CORS and Helmet security
+- **Testing**: Jest with ts-jest and supertest
+- **Development**: Hot reload with nodemon and ts-node
 
 ## Learn More
 

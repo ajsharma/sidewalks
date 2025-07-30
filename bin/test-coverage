@@ -1,0 +1,6 @@
+#!/bin/sh
+# Sidewalks Testing - Coverage Report
+# Runs Jest with code coverage analysis and generates coverage report
+# Usage: ./bin/test-coverage
+
+npx jest --coverage

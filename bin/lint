@@ -1,0 +1,6 @@
+#!/bin/sh
+# Sidewalks Linting - Code Quality Check
+# Runs ESLint to check code quality and style consistency
+# Usage: ./bin/lint
+
+npx next lint

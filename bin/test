@@ -1,0 +1,6 @@
+#!/bin/sh
+# Sidewalks Testing - Run All Tests
+# Executes Jest test suite for both frontend and backend code
+# Usage: ./bin/test
+
+npx jest

@@ -1,0 +1,6 @@
+#!/bin/sh
+# Sidewalks Testing - Watch Mode
+# Runs Jest in watch mode, automatically re-running tests on file changes
+# Usage: ./bin/test-watch
+
+npx jest --watch

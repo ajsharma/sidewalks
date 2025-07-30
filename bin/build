@@ -1,0 +1,6 @@
+#!/bin/sh
+# Sidewalks Build - Production Build
+# Creates optimized production build of the Next.js frontend
+# Usage: ./bin/build
+
+npx next build

@@ -5,7 +5,12 @@
   "bin": {
     "dev": "./bin/dev",
     "dev-server": "./bin/dev-server",
-    "dev-all": "./bin/dev-all"
+    "dev-all": "./bin/dev-all",
+    "test": "./bin/test",
+    "test-watch": "./bin/test-watch",
+    "test-coverage": "./bin/test-coverage",
+    "build": "./bin/build",
+    "lint": "./bin/lint"
   },
   "scripts": {
     "dev": "next dev",
@@ -13,7 +18,10 @@
     "dev:all": "npm run dev & npm run dev:server",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -28,13 +36,18 @@
     "@tailwindcss/postcss": "^4",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/supertest": "^6.0.3",
     "eslint": "^9",
     "eslint-config-next": "15.4.5",
+    "jest": "^30.0.5",
     "nodemon": "^3.1.10",
+    "supertest": "^7.1.4",
     "tailwindcss": "^4",
+    "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5"
   }
