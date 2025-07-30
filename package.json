@@ -13,7 +13,8 @@
     "lint": "./bin/lint",
     "typecheck": "./bin/typecheck",
     "test-ci": "./bin/test-ci",
-    "seed": "./bin/db/seed-drizzle"
+    "seed": "./bin/db/seed",
+    "db:reset": "./bin/db/reset"
   },
   "scripts": {
     "dev": "next dev",
